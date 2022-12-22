@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "baseUrl": "C:/Users/ATZEPE~1.0/AppData/Local/Temp/558a-44c0-7a2f-5481/12379670ba039ce0dba243daa90df4e6027954d8",
+    "checkJs": true,
+    "esModuleInterop": true,
+    "lib": [
+      "ES2019"
+    ],
+    "outDir": "C:/Users/ATZEPE~1.0/AppData/Local/Temp/558a-44c0-7a2f-5481/12379670ba039ce0dba243daa90df4e6027954d8/out-dir",
+    "paths": {
+      "*": [
+        "skylight-typedefs/*",
+        "skylight-node_modules/*"
+      ]
+    },
+    "typeRoots": [
+      "C:/Users/ATZEPE~1.0/AppData/Local/Temp/558a-44c0-7a2f-5481/12379670ba039ce0dba243daa90df4e6027954d8/skylight-node_modules/@types"
+    ],
+    "types": [
+      "node"
+    ]
+  },
+  "include": [
+    "./**/*.js",
+    "./**/*.ts"
+  ]
+}

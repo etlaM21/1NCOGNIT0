@@ -1,0 +1,64 @@
+//==============================================================================
+// Welcome to shader authoring in Spark AR Studio!
+//==============================================================================
+
+#import <gradients>
+#import <sdf>
+
+#define M_PI 3.1415926535897932384626433832795
+#define M_TWOPI 3.1415926535897932384626433832795*2.0
+
+using namespace std;
+
+const float width = 0.15;
+
+const vec2 boxSize = vec2(.25, .25);
+
+const float sinScale = .3;
+
+// Get Brightness
+float luma(vec3 color) {
+  return dot(color, vec3(0.299, 0.587, 0.114));
+}
+
+
+vec4 main(Texture2d cameraTex, out vec4 Color){
+    // Work w/ camera tex input
+    // Get the uv's
+    vec2 uv = fragment(getVertexTexCoord());
+
+    // We will get the color from the texture by using the sample function. 
+    // The glsl equvalent to this is texture2D(tex, uv);
+    // vec4 camColor = cameraTex.sample(uv / 1.5);
+
+    float Pixels = 512.0;
+    float dx = (1.0 * boxSize.x);
+    float dy =  (1.0 * boxSize.y);
+    vec2 Coord = vec2(dx * floor(uv.x / dx),
+                      dy * floor(uv.y / dy));
+    vec4 camColor = cameraTex.sample(Coord);
+
+    // Invert the color's rgb
+    //color.rgb = 1.0 - color.rgb;
+
+    // Normalize
+    vec2 fragCoord = fragment(floor(getRenderTargetSize() * getVertexTexCoord())) / getRenderTargetSize();
+    // creating boxes
+    float x = fragCoord.x / boxSize.x;
+    float y = fragCoord.y / boxSize.y;
+    float x_index = x - floor(x);
+    float y_index = y - floor(y);
+    // Sin magic
+    float s;
+    float y_index_sine = y_index - .5;
+    float sinewave = smoothstep(y_index_sine, y_index_sine +.1, sin((x) * M_PI) * (sinScale*luma(camColor.rgb)));
+    float sinewavemask =  smoothstep(y_index_sine + width, y_index_sine + width +.1, sin((x) * M_PI) * (sinScale*luma(camColor.rgb)));
+    s -= sinewavemask;
+    s += sinewave;
+    // Output
+    // vec3 sinecolor = mix(vec3(0.0), vec3(1.0), s);
+    vec3 sinecolor = mix(vec3(1.0), camColor.rgb, s);
+    Color = vec4(sinecolor, 1.0);
+    return Color;
+    // Color = camColor;
+}

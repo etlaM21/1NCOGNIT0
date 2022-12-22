@@ -1,0 +1,125 @@
+//==============================================================================
+// Welcome to shader authoring in Spark AR Studio!
+//==============================================================================
+
+#import <gradients>
+#import <sdf>
+
+#define M_PI 3.1415926535897932384626433832795
+#define M_TWOPI 3.1415926535897932384626433832795*2.0
+
+using namespace std;
+
+const float width = .15;
+const float sinScale = .3;
+
+float character2(int n, vec2 p)
+{
+	p = floor(p*vec2(4.0, -4.0) + 2.5);
+    if (clamp(p.x, 0.0, 4.0) == p.x)
+	{
+        if (clamp(p.y, 0.0, 4.0) == p.y)	
+		{
+        	// int a = int(round(p.x) + 5.0 * round(p.y));
+			    // if (((n >> a) & 1) == 1) return 1.0;
+          //int(mod(n/exp2(p.x + 5.0*p.y), 2.0));
+		}	
+    }
+	return 0.0;
+}
+
+float character(int[25] n, vec2 p, vec2 boxSize)
+{
+  vec2 p_start = p;
+  float x_index = p.x - floor(p.x);
+  float y_index = p.y - floor(p.y);
+  vec2 gridSize = boxSize / 4.0;
+  vec2 grid =  p * 6.0;
+  vec2 grid2 = floor(p*vec2(4.0, -4.0) + 2.5);
+  for(int y = 0; y < 5; y++){
+    for(int x = 0; x < 5; x++){
+      int gridPosX = int(mod(grid.x-0.5, 6.0));
+      int gridPosY = int(mod(grid.y-0.5, 6.0));
+      if(gridPosX == x && gridPosY == y){
+        if(n[(gridPosX) + (gridPosY * 5)] == 1) return 1.0;
+      }
+    }
+  }
+  // if(mod(grid.x, 5.0) > 4.0) return 1.0;
+  // if(mod(grid.x, 5.0) > 3.0) return 0.8;
+  // if(mod(grid.x, 5.0) > 2.0) return 0.6;
+  // if(mod(grid.x, 5.0) > 1.0) return 0.4;
+  return 0.0;
+}
+
+// Get Brightness
+// Source: https://github.com/hughsk/glsl-luma
+float luma(vec3 color) {
+  return dot(color, vec3(0.299, 0.587, 0.114));
+}
+
+// This function description will appear in the inspector
+// @main
+// @param cameraTex The camera texture to sample from (could also be an image!)
+// @param backgroundColor The background color as Vec3 (RGB)
+// @param boxSizeScale The scaling of the individual sine waves
+vec4 main(Texture2d cameraTex, vec3 backgroundColor, float boxSizeScale){
+    vec2 ratio = vec2(getRenderTargetSize().y / getRenderTargetSize().x, getRenderTargetSize().x / getRenderTargetSize().y);
+    vec2 boxSize = vec2(.05 * ratio.x, .05);
+    vec2 usedBoxSize = boxSize * boxSizeScale;
+    // Work w/ camera tex input
+    // Get the uv's
+    vec2 uv = fragment(getVertexTexCoord());
+
+    // We will get the color from the texture by using the sample function. 
+    // The glsl equvalent to this is texture2D(tex, uv);
+    // vec4 camColor = cameraTex.sample(uv / 1.5);
+    // Pixaltion Shader Source: http://coding-experiments.blogspot.com/2010/06/pixelation.html
+    float Pixels = 512.0; 
+    float dx = (1.0 * usedBoxSize.x);
+    float dy =  (1.0 * usedBoxSize.y);
+    vec2 Coord = vec2(dx * floor(uv.x / dx),
+                      dy * floor(uv.y / dy));
+    vec4 camColor = cameraTex.sample(Coord);
+
+    // Invert the color's rgb
+    //color.rgb = 1.0 - color.rgb;
+
+    // Normalize
+    vec2 fragCoord = fragment(floor(getRenderTargetSize() * getVertexTexCoord())) / getRenderTargetSize();
+    // creating boxes
+    float x = fragCoord.x / usedBoxSize.x;
+    float y = fragCoord.y / usedBoxSize.y;
+    float x_index = x - floor(x);
+    float y_index = y - floor(y);
+    // Sin magic
+    float s;
+    float y_index_sine = y_index - .5;
+    float pxBrightness = abs(luma(camColor.rgb) - (backgroundColor.r));
+  
+    int n[25];
+    int blank[25] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    int singledot[25] = {0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0};
+    int dotdot[25] = {0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0};
+    int plusSign[25] = {0,0,0,0,0,0,0,1,0,0,0,1,1,1,0,0,0,1,0,0,0,0,0,0,0};
+    // int circle[25] = {0,1,1,1,0,1,0,0,0,1,1,0,0,0,1,1,0,0,0,1,0,1,1,1,0};
+    int xSign[25] = {1,0,0,0,1,0,1,0,1,0,0,0,1,0,0,0,1,0,1,0,1,0,0,0,1};
+    int bigDot[25] = {0,0,1,0,0,0,1,1,1,0,1,1,1,1,1,0,1,1,1,0,0,0,1,0,0};
+    int hashtag[25] = {0,1,0,1,0,1,1,1,1,1,0,1,0,1,0,1,1,1,1,1,0,1,0,1,0};
+
+    for(int i = 0; i < 25; i++) { n[i] = blank[i]; }
+    if(pxBrightness > 0.1) for(int i = 0; i < 25; i++) { n[i] = singledot[i]; }
+    if(pxBrightness > 0.3) for(int i = 0; i < 25; i++) { n[i] = dotdot[i]; }
+    if(pxBrightness > 0.4) for(int i = 0; i < 25; i++) { n[i] = plusSign[i]; }
+    if(pxBrightness > 0.5) for(int i = 0; i < 25; i++) { n[i] = xSign[i]; }
+    if(pxBrightness > 0.6) for(int i = 0; i < 25; i++) { n[i] = hashtag[i]; }
+    if(pxBrightness > 0.8) for(int i = 0; i < 25; i++) { n[i] = bigDot[i]; }
+    
+    float ascii = character(n, vec2(x, y), usedBoxSize);
+
+    vec3 asciiolor =  mix(backgroundColor, camColor.rgb, ascii);
+    vec4 Color = vec4(asciiolor.rgb, 1.0);
+    // Color = camColor;
+    // Color = vec4(sinewave-sinewavemask,sinewave-sinewavemask, sinewave-sinewavemask, 1.0);
+    return Color;
+}
